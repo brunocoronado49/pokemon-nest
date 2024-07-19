@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
@@ -20,18 +25,12 @@ export class PokemonService {
       const pokemon = await this.pokemonModel.create(createPokemonDto);
       return pokemon;
     } catch(error) {
-      if(error.code === 11000) {
-        throw new BadRequestException(
-          `Pokemon exists already: ${JSON.stringify(error.keyValue)}`);
-      }
-
-      console.log(error);
-      throw new InternalServerErrorException(`Can't create pokemon`);
+      this.handleExceptions(error);
     }
   }
 
   findAll() {
-    return `This action returns all pokemon`;
+    return 'find all pokemons';
   }
 
   async findOne(term: string) {
@@ -57,11 +56,31 @@ export class PokemonService {
     return pokemon;
   }
 
-  update(id: number, updatePokemonDto: UpdatePokemonDto) {
-    return `This action updates a #${id} pokemon`;
+  async update(term: string, updatePokemonDto: UpdatePokemonDto) {
+    const pokemon = await this.findOne(term);
+    
+    if(updatePokemonDto.name)
+      updatePokemonDto.name = updatePokemonDto.name.toLowerCase();
+
+    try {
+      await pokemon.updateOne(updatePokemonDto);
+      return { ...pokemon.toJSON(), ...updatePokemonDto };
+    } catch(error) {
+      this.handleExceptions(error);
+    }
   }
 
   remove(id: number) {
     return `This action removes a #${id} pokemon`;
+  }
+
+  private handleExceptions(error: any) {
+    if(error.code === 11000) {
+      throw new BadRequestException(
+        `Pokemon exists already: ${JSON.stringify(error.keyValue)}`);
+    }
+
+    console.log(error);
+    throw new InternalServerErrorException(`Can't modify pokemon`);
   }
 }
