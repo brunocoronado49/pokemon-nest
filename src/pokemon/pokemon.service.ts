@@ -26,7 +26,7 @@ export class PokemonService {
       }
 
       console.log(error);
-      throw new InternalServerErrorException(`Can't create pokemon`)
+      throw new InternalServerErrorException(`Can't create pokemon`);
     }
   }
 
